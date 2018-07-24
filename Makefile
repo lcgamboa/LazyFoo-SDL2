@@ -7,6 +7,8 @@ SUBDIRS =  $(wildcard */)
 
 all:$(SUBDIRS) 
 
+js:$(SUBDIRS) 
+
 clean:$(SUBDIRS) 
 
 $(SUBDIRS):

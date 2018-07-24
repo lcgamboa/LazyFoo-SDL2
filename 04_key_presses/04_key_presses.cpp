@@ -5,7 +5,9 @@ and may not be redistributed without written permission.*/
 #include <SDL.h>
 #include <stdio.h>
 #include <string>
-
+#ifdef _JS
+#include <emscripten.h>
+#endif
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
@@ -153,6 +155,53 @@ SDL_Surface* loadSurface( std::string path )
 }
 
 
+//Main loop flag
+bool quit = false;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+ 	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+//User presses a key
+		else if( e.type == SDL_KEYDOWN )
+		{
+			//Select surfaces based on key press
+			switch( e.key.keysym.sym )
+			{
+				case SDLK_UP:
+					gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_UP ];
+					break;
+				case SDLK_DOWN:
+					gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_DOWN ];
+					break;
+				case SDLK_LEFT:
+					gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_LEFT ];
+					break;
+				case SDLK_RIGHT:
+					gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_RIGHT ];
+					break;
+				default:
+					gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_DEFAULT ];
+					break;
+			}
+		}
+	}
+
+	//Apply the image
+	SDL_BlitSurface( gCurrentSurface , NULL, gScreenSurface, NULL );
+			
+	//Update the surface
+	SDL_UpdateWindowSurface( gWindow );
+}
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -169,61 +218,21 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
-
-			//Event handler
-			SDL_Event e;
 
 			//Set default current surface
 			gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_DEFAULT ];
 
+#ifdef _JS
+
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-					//User presses a key
-					else if( e.type == SDL_KEYDOWN )
-					{
-						//Select surfaces based on key press
-						switch( e.key.keysym.sym )
-						{
-							case SDLK_UP:
-							gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_UP ];
-							break;
-
-							case SDLK_DOWN:
-							gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_DOWN ];
-							break;
-
-							case SDLK_LEFT:
-							gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_LEFT ];
-							break;
-
-							case SDLK_RIGHT:
-							gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_RIGHT ];
-							break;
-
-							default:
-							gCurrentSurface = gKeyPressSurfaces[ KEY_PRESS_SURFACE_DEFAULT ];
-							break;
-						}
-					}
-				}
-
-				//Apply the current image
-				SDL_BlitSurface( gCurrentSurface, NULL, gScreenSurface, NULL );
-			
-				//Update the surface
-				SDL_UpdateWindowSurface( gWindow );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

@@ -4,7 +4,9 @@ and may not be redistributed without written permission.*/
 //Using SDL and standard IO
 #include <SDL.h>
 #include <stdio.h>
-
+#ifdef _JS
+#include <emscripten.h>
+#endif
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
@@ -87,6 +89,31 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+ 	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+	}
+
+	//Apply the image
+	SDL_BlitSurface( gXOut, NULL, gScreenSurface, NULL );
+			
+	//Update the surface
+	SDL_UpdateWindowSurface( gWindow );
+}
+
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -103,31 +130,19 @@ int main( int argc, char* args[] )
 		}
 		else
 		{			
-			//Main loop flag
-			bool quit = false;
 
-			//Event handler
-			SDL_Event e;
+#ifdef _JS
 
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-				}
-
-				//Apply the image
-				SDL_BlitSurface( gXOut, NULL, gScreenSurface, NULL );
-			
-				//Update the surface
-				SDL_UpdateWindowSurface( gWindow );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
+
 		}
 	}
 
@@ -136,3 +151,7 @@ int main( int argc, char* args[] )
 
 	return 0;
 }
+
+
+
+

@@ -6,6 +6,9 @@ and may not be redistributed without written permission.*/
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -292,6 +295,47 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+//Current animation frame
+int frame = 0;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render current frame
+	SDL_Rect* currentClip = &gSpriteClips[ frame / 4 ];
+	gSpriteSheetTexture.render( ( SCREEN_WIDTH - currentClip->w ) / 2, ( SCREEN_HEIGHT - currentClip->h ) / 2, currentClip );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+	//Go to next frame
+	++frame;
+
+	//Cycle animation
+	if( frame / 4 >= WALKING_ANIMATION_FRAMES )
+	{
+		frame = 0;
+	}
+
+}
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -308,48 +352,18 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
-			//Current animation frame
-			int frame = 0;
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render current frame
-				SDL_Rect* currentClip = &gSpriteClips[ frame / 4 ];
-				gSpriteSheetTexture.render( ( SCREEN_WIDTH - currentClip->w ) / 2, ( SCREEN_HEIGHT - currentClip->h ) / 2, currentClip );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
-
-				//Go to next frame
-				++frame;
-
-				//Cycle animation
-				if( frame / 4 >= WALKING_ANIMATION_FRAMES )
-				{
-					frame = 0;
-				}
+		 	 loop_handler(NULL);	
 			}
+#endif
+
+
 		}
 	}
 

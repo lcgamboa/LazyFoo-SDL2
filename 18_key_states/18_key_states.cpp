@@ -6,6 +6,9 @@ and may not be redistributed without written permission.*/
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -344,6 +347,61 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+//Current rendered texture
+LTexture* currentTexture = NULL;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+	}
+
+	//Set texture based on current keystate
+	const Uint8* currentKeyStates = SDL_GetKeyboardState( NULL );
+	if( currentKeyStates[ SDL_SCANCODE_UP ] )
+	{
+		currentTexture = &gUpTexture;
+	}
+	else if( currentKeyStates[ SDL_SCANCODE_DOWN ] )
+	{
+		currentTexture = &gDownTexture;
+	}
+	else if( currentKeyStates[ SDL_SCANCODE_LEFT ] )
+	{
+		currentTexture = &gLeftTexture;
+	}
+	else if( currentKeyStates[ SDL_SCANCODE_RIGHT ] )
+	{
+		currentTexture = &gRightTexture;
+	}
+	else
+	{
+		currentTexture = &gPressTexture;
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render current texture
+	currentTexture->render( 0, 0 );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -360,61 +418,17 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
-			//Current rendered texture
-			LTexture* currentTexture = NULL;
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-				}
-
-				//Set texture based on current keystate
-				const Uint8* currentKeyStates = SDL_GetKeyboardState( NULL );
-				if( currentKeyStates[ SDL_SCANCODE_UP ] )
-				{
-					currentTexture = &gUpTexture;
-				}
-				else if( currentKeyStates[ SDL_SCANCODE_DOWN ] )
-				{
-					currentTexture = &gDownTexture;
-				}
-				else if( currentKeyStates[ SDL_SCANCODE_LEFT ] )
-				{
-					currentTexture = &gLeftTexture;
-				}
-				else if( currentKeyStates[ SDL_SCANCODE_RIGHT ] )
-				{
-					currentTexture = &gRightTexture;
-				}
-				else
-				{
-					currentTexture = &gPressTexture;
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render current texture
-				currentTexture->render( 0, 0 );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

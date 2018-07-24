@@ -6,6 +6,9 @@ and may not be redistributed without written permission.*/
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -249,6 +252,78 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+//Modulation components
+Uint8 r = 255;
+Uint8 g = 255;
+Uint8 b = 255;
+
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+	//On keypress change rgb values
+	else if( e.type == SDL_KEYDOWN )
+	{
+		switch( e.key.keysym.sym )
+		{
+			//Increase red
+			case SDLK_q:
+				r += 32;
+				break;
+			
+			//Increase green
+			case SDLK_w:
+				g += 32;
+				break;
+							
+			//Increase blue
+			case SDLK_e:
+				b += 32;
+				break;
+							
+			//Decrease red
+			case SDLK_a:
+				r -= 32;
+				break;
+							
+			//Decrease green
+			case SDLK_s:
+				g -= 32;
+				break;
+							
+			//Decrease blue
+			case SDLK_d:
+				b -= 32;
+				break;
+			}
+		}
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Modulate and render texture
+	gModulatedTexture.setColor( r, g, b );
+	gModulatedTexture.render( 0, 0 );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -265,77 +340,18 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
-			//Modulation components
-			Uint8 r = 255;
-			Uint8 g = 255;
-			Uint8 b = 255;
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-					//On keypress change rgb values
-					else if( e.type == SDL_KEYDOWN )
-					{
-						switch( e.key.keysym.sym )
-						{
-							//Increase red
-							case SDLK_q:
-							r += 32;
-							break;
-							
-							//Increase green
-							case SDLK_w:
-							g += 32;
-							break;
-							
-							//Increase blue
-							case SDLK_e:
-							b += 32;
-							break;
-							
-							//Decrease red
-							case SDLK_a:
-							r -= 32;
-							break;
-							
-							//Decrease green
-							case SDLK_s:
-							g -= 32;
-							break;
-							
-							//Decrease blue
-							case SDLK_d:
-							b -= 32;
-							break;
-						}
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Modulate and render texture
-				gModulatedTexture.setColor( r, g, b );
-				gModulatedTexture.render( 0, 0 );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
+
 		}
 	}
 

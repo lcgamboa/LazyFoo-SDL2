@@ -7,6 +7,9 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <string>
 #include <cmath>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -335,6 +338,91 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+//Normalized direction
+int xDir = 0;
+int yDir = 0;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+		else if( e.type == SDL_JOYAXISMOTION )
+		{
+			//Motion on controller 0
+			if( e.jaxis.which == 0 )
+			{						
+				//X axis motion
+				if( e.jaxis.axis == 0 )
+				{
+					//Left of dead zone
+					if( e.jaxis.value < -JOYSTICK_DEAD_ZONE )
+					{
+						xDir = -1;
+					}
+					//Right of dead zone
+					else if( e.jaxis.value > JOYSTICK_DEAD_ZONE )
+					{
+						xDir =  1;
+					}
+					else
+					{
+						xDir = 0;
+					}
+				}
+				//Y axis motion
+				else if( e.jaxis.axis == 1 )
+				{
+					//Below of dead zone
+					if( e.jaxis.value < -JOYSTICK_DEAD_ZONE )
+					{
+						yDir = -1;
+					}
+					//Above of dead zone
+					else if( e.jaxis.value > JOYSTICK_DEAD_ZONE )
+					{
+						yDir =  1;
+					}
+					else
+					{
+						yDir = 0;
+					}
+				}
+			}
+		}
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Calculate angle
+	double joystickAngle = atan2( (double)yDir, (double)xDir ) * ( 180.0 / M_PI );
+				
+	//Correct angle
+	if( xDir == 0 && yDir == 0 )
+	{
+		joystickAngle = 0;
+	}
+
+	//Render joystick 8 way angle
+	gArrowTexture.render( ( SCREEN_WIDTH - gArrowTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gArrowTexture.getHeight() ) / 2, NULL, joystickAngle );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -351,91 +439,17 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
-			//Normalized direction
-			int xDir = 0;
-			int yDir = 0;
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-					else if( e.type == SDL_JOYAXISMOTION )
-					{
-						//Motion on controller 0
-						if( e.jaxis.which == 0 )
-						{						
-							//X axis motion
-							if( e.jaxis.axis == 0 )
-							{
-								//Left of dead zone
-								if( e.jaxis.value < -JOYSTICK_DEAD_ZONE )
-								{
-									xDir = -1;
-								}
-								//Right of dead zone
-								else if( e.jaxis.value > JOYSTICK_DEAD_ZONE )
-								{
-									xDir =  1;
-								}
-								else
-								{
-									xDir = 0;
-								}
-							}
-							//Y axis motion
-							else if( e.jaxis.axis == 1 )
-							{
-								//Below of dead zone
-								if( e.jaxis.value < -JOYSTICK_DEAD_ZONE )
-								{
-									yDir = -1;
-								}
-								//Above of dead zone
-								else if( e.jaxis.value > JOYSTICK_DEAD_ZONE )
-								{
-									yDir =  1;
-								}
-								else
-								{
-									yDir = 0;
-								}
-							}
-						}
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Calculate angle
-				double joystickAngle = atan2( (double)yDir, (double)xDir ) * ( 180.0 / M_PI );
-				
-				//Correct angle
-				if( xDir == 0 && yDir == 0 )
-				{
-					joystickAngle = 0;
-				}
-
-				//Render joystick 8 way angle
-				gArrowTexture.render( ( SCREEN_WIDTH - gArrowTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gArrowTexture.getHeight() ) / 2, NULL, joystickAngle );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

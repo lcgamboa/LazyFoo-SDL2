@@ -6,6 +6,9 @@ and may not be redistributed without written permission.*/
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -147,6 +150,69 @@ SDL_Texture* loadTexture( std::string path )
 	return newTexture;
 }
 
+//Main loop flag
+bool quit = false;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Top left corner viewport
+	SDL_Rect topLeftViewport;
+	topLeftViewport.x = 0;
+	topLeftViewport.y = 0;
+	topLeftViewport.w = SCREEN_WIDTH / 2;
+	topLeftViewport.h = SCREEN_HEIGHT / 2;
+	SDL_RenderSetViewport( gRenderer, &topLeftViewport );
+				
+	//Render texture to screen
+	SDL_RenderCopy( gRenderer, gTexture, NULL, NULL );
+
+
+	//Top right viewport
+	SDL_Rect topRightViewport;
+	topRightViewport.x = SCREEN_WIDTH / 2;
+	topRightViewport.y = 0;
+	topRightViewport.w = SCREEN_WIDTH / 2;
+	topRightViewport.h = SCREEN_HEIGHT / 2;
+	SDL_RenderSetViewport( gRenderer, &topRightViewport );
+				
+	//Render texture to screen
+	SDL_RenderCopy( gRenderer, gTexture, NULL, NULL );
+
+
+	//Bottom viewport
+	SDL_Rect bottomViewport;
+	bottomViewport.x = 0;
+	bottomViewport.y = SCREEN_HEIGHT / 2;
+	bottomViewport.w = SCREEN_WIDTH;
+	bottomViewport.h = SCREEN_HEIGHT / 2;
+	SDL_RenderSetViewport( gRenderer, &bottomViewport );
+
+				
+	//Render texture to screen
+	SDL_RenderCopy( gRenderer, gTexture, NULL, NULL );
+
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -163,69 +229,17 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Top left corner viewport
-				SDL_Rect topLeftViewport;
-				topLeftViewport.x = 0;
-				topLeftViewport.y = 0;
-				topLeftViewport.w = SCREEN_WIDTH / 2;
-				topLeftViewport.h = SCREEN_HEIGHT / 2;
-				SDL_RenderSetViewport( gRenderer, &topLeftViewport );
-				
-				//Render texture to screen
-				SDL_RenderCopy( gRenderer, gTexture, NULL, NULL );
-
-
-				//Top right viewport
-				SDL_Rect topRightViewport;
-				topRightViewport.x = SCREEN_WIDTH / 2;
-				topRightViewport.y = 0;
-				topRightViewport.w = SCREEN_WIDTH / 2;
-				topRightViewport.h = SCREEN_HEIGHT / 2;
-				SDL_RenderSetViewport( gRenderer, &topRightViewport );
-				
-				//Render texture to screen
-				SDL_RenderCopy( gRenderer, gTexture, NULL, NULL );
-
-
-				//Bottom viewport
-				SDL_Rect bottomViewport;
-				bottomViewport.x = 0;
-				bottomViewport.y = SCREEN_HEIGHT / 2;
-				bottomViewport.w = SCREEN_WIDTH;
-				bottomViewport.h = SCREEN_HEIGHT / 2;
-				SDL_RenderSetViewport( gRenderer, &bottomViewport );
-
-				
-				//Render texture to screen
-				SDL_RenderCopy( gRenderer, gTexture, NULL, NULL );
-
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

@@ -8,7 +8,7 @@ all: $(TARGET)
 %:%.cpp
 	$(CC) $(FLAGS) $(FILE) -o $(TARGET) $(LIBS)
 
-js:
+js: 
 	$(CCE) $(FILE)  $(FLAGSE) -o $(TARGET).html
 
 clean:

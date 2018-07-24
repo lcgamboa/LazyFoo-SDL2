@@ -7,6 +7,9 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <string>
 #include <cmath>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -351,6 +354,43 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+		//Joystick button press
+		else if( e.type == SDL_JOYBUTTONDOWN )
+		{
+			//Play rumble at 75% strenght for 500 milliseconds
+			if( SDL_HapticRumblePlay( gControllerHaptic, 0.75, 500 ) != 0 )
+			{
+				printf( "Warning: Unable to play rumble! %s\n", SDL_GetError() );
+			}
+		}
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render splash image
+	gSplashTexture.render( 0, 0 );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+}
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -367,44 +407,17 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-					//Joystick button press
-					else if( e.type == SDL_JOYBUTTONDOWN )
-					{
-						//Play rumble at 75% strenght for 500 milliseconds
-						if( SDL_HapticRumblePlay( gControllerHaptic, 0.75, 500 ) != 0 )
-						{
-							printf( "Warning: Unable to play rumble! %s\n", SDL_GetError() );
-						}
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render splash image
-				gSplashTexture.render( 0, 0 );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

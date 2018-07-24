@@ -6,6 +6,9 @@ and may not be redistributed without written permission.*/
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -281,6 +284,75 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+
+//Modulation component
+Uint8 a = 255;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+		//Handle key presses
+		else if( e.type == SDL_KEYDOWN )
+		{
+			//Increase alpha on w
+			if( e.key.keysym.sym == SDLK_w )
+			{
+				//Cap if over 255
+				if( a + 32 > 255 )
+				{
+					a = 255;
+				}
+				//Increment otherwise
+				else
+				{
+					a += 32;
+				}
+			}
+			//Decrease alpha on s
+			else if( e.key.keysym.sym == SDLK_s )
+			{
+				//Cap if below 0
+				if( a - 32 < 0 )
+				{
+					a = 0;
+				}
+				//Decrement otherwise
+				else
+				{
+					a -= 32;
+				}
+			}
+		}
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render background
+	gBackgroundTexture.render( 0, 0 );
+
+	//Render front blended
+	gModulatedTexture.setAlpha( a );
+	gModulatedTexture.render( 0, 0 );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -297,74 +369,18 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
-			//Modulation component
-			Uint8 a = 255;
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-					//Handle key presses
-					else if( e.type == SDL_KEYDOWN )
-					{
-						//Increase alpha on w
-						if( e.key.keysym.sym == SDLK_w )
-						{
-							//Cap if over 255
-							if( a + 32 > 255 )
-							{
-								a = 255;
-							}
-							//Increment otherwise
-							else
-							{
-								a += 32;
-							}
-						}
-						//Decrease alpha on s
-						else if( e.key.keysym.sym == SDLK_s )
-						{
-							//Cap if below 0
-							if( a - 32 < 0 )
-							{
-								a = 0;
-							}
-							//Decrement otherwise
-							else
-							{
-								a -= 32;
-							}
-						}
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render background
-				gBackgroundTexture.render( 0, 0 );
-
-				//Render front blended
-				gModulatedTexture.setAlpha( a );
-				gModulatedTexture.render( 0, 0 );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
+
 		}
 	}
 

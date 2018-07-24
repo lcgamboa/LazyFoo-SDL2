@@ -429,7 +429,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load dot texture
-	if( !gDotTexture.loadFromFile( "29_circular_collision_detection/dot.bmp" ) )
+	if( !gDotTexture.loadFromFile( "assets/dot.bmp" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;

@@ -447,12 +447,12 @@ bool loadMedia()
 	bool success = true;
 
 	//Load splash textures
-	if( !gPortraitTexture.loadFromFile( "53_extensions_and_changing_orientation/portrait.png" ) )
+	if( !gPortraitTexture.loadFromFile( "assets/portrait.png" ) )
 	{
 		SDL_Log( "Failed to load portrait texture!\n" );
 		success = false;
 	}
-	if( !gLandscapeTexture.loadFromFile( "53_extensions_and_changing_orientation/landscape.png" ) )
+	if( !gLandscapeTexture.loadFromFile( "assets/landscape.png" ) )
 	{
 		SDL_Log( "Failed to load landscape texture!\n" );
 		success = false;

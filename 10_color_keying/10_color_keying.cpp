@@ -207,14 +207,14 @@ bool loadMedia()
 	bool success = true;
 
 	//Load Foo' texture
-	if( !gFooTexture.loadFromFile( "10_color_keying/foo.png" ) )
+	if( !gFooTexture.loadFromFile( "assets/foo.png" ) )
 	{
 		printf( "Failed to load Foo' texture image!\n" );
 		success = false;
 	}
 	
 	//Load background texture
-	if( !gBackgroundTexture.loadFromFile( "10_color_keying/background.png" ) )
+	if( !gBackgroundTexture.loadFromFile( "assets/background.png" ) )
 	{
 		printf( "Failed to load background texture image!\n" );
 		success = false;

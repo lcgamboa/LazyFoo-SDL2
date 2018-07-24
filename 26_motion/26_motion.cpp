@@ -415,7 +415,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load dot texture
-	if( !gDotTexture.loadFromFile( "26_motion/dot.bmp" ) )
+	if( !gDotTexture.loadFromFile( "assets/dot.bmp" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;

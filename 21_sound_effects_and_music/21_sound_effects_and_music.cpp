@@ -301,14 +301,14 @@ bool loadMedia()
 	bool success = true;
 
 	//Load prompt texture
-	if( !gPromptTexture.loadFromFile( "21_sound_effects_and_music/prompt.png" ) )
+	if( !gPromptTexture.loadFromFile( "assets/prompt.png" ) )
 	{
 		printf( "Failed to load prompt texture!\n" );
 		success = false;
 	}
 
 	//Load music
-	gMusic = Mix_LoadMUS( "21_sound_effects_and_music/beat.wav" );
+	gMusic = Mix_LoadMUS( "assets/beat.wav" );
 	if( gMusic == NULL )
 	{
 		printf( "Failed to load beat music! SDL_mixer Error: %s\n", Mix_GetError() );
@@ -316,28 +316,28 @@ bool loadMedia()
 	}
 	
 	//Load sound effects
-	gScratch = Mix_LoadWAV( "21_sound_effects_and_music/scratch.wav" );
+	gScratch = Mix_LoadWAV( "assets/scratch.wav" );
 	if( gScratch == NULL )
 	{
 		printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
 		success = false;
 	}
 	
-	gHigh = Mix_LoadWAV( "21_sound_effects_and_music/high.wav" );
+	gHigh = Mix_LoadWAV( "assets/high.wav" );
 	if( gHigh == NULL )
 	{
 		printf( "Failed to load high sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
 		success = false;
 	}
 
-	gMedium = Mix_LoadWAV( "21_sound_effects_and_music/medium.wav" );
+	gMedium = Mix_LoadWAV( "assets/medium.wav" );
 	if( gMedium == NULL )
 	{
 		printf( "Failed to load medium sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
 		success = false;
 	}
 
-	gLow = Mix_LoadWAV( "21_sound_effects_and_music/low.wav" );
+	gLow = Mix_LoadWAV( "assets/low.wav" );
 	if( gLow == NULL )
 	{
 		printf( "Failed to load low sound effect! SDL_mixer Error: %s\n", Mix_GetError() );

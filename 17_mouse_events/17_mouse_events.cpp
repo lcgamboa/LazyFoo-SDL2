@@ -404,7 +404,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load sprites
-	if( !gButtonSpriteSheetTexture.loadFromFile( "17_mouse_events/button.png" ) )
+	if( !gButtonSpriteSheetTexture.loadFromFile( "assets/button.png" ) )
 	{
 		printf( "Failed to load button sprite texture!\n" );
 		success = false;

@@ -498,35 +498,35 @@ bool loadMedia()
 	bool success = true;
 
 	//Load dot texture
-	if( !gDotTexture.loadFromFile( "38_particle_engines/dot.bmp" ) )
+	if( !gDotTexture.loadFromFile( "assets/dot.bmp" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;
 	}
 
 	//Load red texture
-	if( !gRedTexture.loadFromFile( "38_particle_engines/red.bmp" ) )
+	if( !gRedTexture.loadFromFile( "assets/red.bmp" ) )
 	{
 		printf( "Failed to load red texture!\n" );
 		success = false;
 	}
 
 	//Load green texture
-	if( !gGreenTexture.loadFromFile( "38_particle_engines/green.bmp" ) )
+	if( !gGreenTexture.loadFromFile( "assets/green.bmp" ) )
 	{
 		printf( "Failed to load green texture!\n" );
 		success = false;
 	}
 
 	//Load blue texture
-	if( !gBlueTexture.loadFromFile( "38_particle_engines/blue.bmp" ) )
+	if( !gBlueTexture.loadFromFile( "assets/blue.bmp" ) )
 	{
 		printf( "Failed to load blue texture!\n" );
 		success = false;
 	}
 
 	//Load shimmer texture
-	if( !gShimmerTexture.loadFromFile( "38_particle_engines/shimmer.bmp" ) )
+	if( !gShimmerTexture.loadFromFile( "assets/shimmer.bmp" ) )
 	{
 		printf( "Failed to load shimmer texture!\n" );
 		success = false;

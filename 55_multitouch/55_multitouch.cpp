@@ -448,17 +448,17 @@ bool loadMedia()
 	bool success = true;
 
 	//Load scene textures
-	if( !gPinchCloseTexture.loadFromFile( "55_multitouch/pinch_close.png" ) )
+	if( !gPinchCloseTexture.loadFromFile( "assets/pinch_close.png" ) )
 	{
 		SDL_Log( "Failed to load pinch close texture!\n" );
 		success = false;
 	}
-	if( !gPinchOpenTexture.loadFromFile( "55_multitouch/pinch_open.png" ) )
+	if( !gPinchOpenTexture.loadFromFile( "assets/pinch_open.png" ) )
 	{
 		SDL_Log( "Failed to load pinch open texture!\n" );
 		success = false;
 	}
-	if( !gRotateTexture.loadFromFile( "55_multitouch/rotate.png" ) )
+	if( !gRotateTexture.loadFromFile( "assets/rotate.png" ) )
 	{
 		SDL_Log( "Failed to load rotate texture!\n" );
 		success = false;

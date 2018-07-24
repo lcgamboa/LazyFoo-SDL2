@@ -306,7 +306,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load arrow texture
-	if( !gArrowTexture.loadFromFile( "19_gamepads_and_joysticks/arrow.png" ) )
+	if( !gArrowTexture.loadFromFile( "assets/arrow.png" ) )
 	{
 		printf( "Failed to load arrow texture!\n" );
 		success = false;

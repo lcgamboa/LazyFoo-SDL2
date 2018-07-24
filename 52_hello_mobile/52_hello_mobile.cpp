@@ -437,7 +437,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load splash texture
-	if( !gSplashTexture.loadFromFile( "52_hello_mobile/hello.bmp" ) )
+	if( !gSplashTexture.loadFromFile( "assets/hello.bmp" ) )
 	{
 		SDL_Log( "Failed to load splash texture!\n" );
 		success = false;

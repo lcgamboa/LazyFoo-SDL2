@@ -396,7 +396,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load press texture
-	if( !gDotTexture.loadFromFile( "27_collision_detection/dot.bmp" ) )
+	if( !gDotTexture.loadFromFile( "assets/dot.bmp" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;

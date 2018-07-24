@@ -287,35 +287,35 @@ bool loadMedia()
 	bool success = true;
 
 	//Load press texture
-	if( !gPressTexture.loadFromFile( "18_key_states/press.png" ) )
+	if( !gPressTexture.loadFromFile( "assets/press.png" ) )
 	{
 		printf( "Failed to load press texture!\n" );
 		success = false;
 	}
 	
 	//Load up texture
-	if( !gUpTexture.loadFromFile( "18_key_states/up.png" ) )
+	if( !gUpTexture.loadFromFile( "assets/up.png" ) )
 	{
 		printf( "Failed to load up texture!\n" );
 		success = false;
 	}
 
 	//Load down texture
-	if( !gDownTexture.loadFromFile( "18_key_states/down.png" ) )
+	if( !gDownTexture.loadFromFile( "assets/down.png" ) )
 	{
 		printf( "Failed to load down texture!\n" );
 		success = false;
 	}
 
 	//Load left texture
-	if( !gLeftTexture.loadFromFile( "18_key_states/left.png" ) )
+	if( !gLeftTexture.loadFromFile( "assets/left.png" ) )
 	{
 		printf( "Failed to load left texture!\n" );
 		success = false;
 	}
 
 	//Load right texture
-	if( !gRightTexture.loadFromFile( "18_key_states/right.png" ) )
+	if( !gRightTexture.loadFromFile( "assets/right.png" ) )
 	{
 		printf( "Failed to load right texture!\n" );
 		success = false;

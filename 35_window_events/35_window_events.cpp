@@ -483,7 +483,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load scene texture
-	if( !gSceneTexture.loadFromFile( "35_window_events/window.png" ) )
+	if( !gSceneTexture.loadFromFile( "assets/window.png" ) )
 	{
 		printf( "Failed to load window texture!\n" );
 		success = false;

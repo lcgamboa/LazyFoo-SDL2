@@ -244,7 +244,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load sprite sheet texture
-	if( !gSpriteSheetTexture.loadFromFile( "14_animated_sprites_and_vsync/foo.png" ) )
+	if( !gSpriteSheetTexture.loadFromFile( "assets/foo.png" ) )
 	{
 		printf( "Failed to load walking animation texture!\n" );
 		success = false;

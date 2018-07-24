@@ -216,7 +216,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load sprite sheet texture
-	if( !gSpriteSheetTexture.loadFromFile( "11_clip_rendering_and_sprite_sheets/dots.png" ) )
+	if( !gSpriteSheetTexture.loadFromFile( "assets/dots.png" ) )
 	{
 		printf( "Failed to load sprite sheet texture!\n" );
 		success = false;

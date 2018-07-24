@@ -320,7 +320,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load press texture
-	if( !gSplashTexture.loadFromFile( "20_force_feedback/splash.png" ) )
+	if( !gSplashTexture.loadFromFile( "assets/splash.png" ) )
 	{
 		printf( "Failed to load splash texture!\n" );
 		success = false;

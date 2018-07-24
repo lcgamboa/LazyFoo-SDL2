@@ -67,7 +67,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load stretching surface
-	gStretchedSurface = loadSurface( "05_optimized_surface_loading_and_soft_stretching/stretch.bmp" );
+	gStretchedSurface = loadSurface( "assets/stretch.bmp" );
 	if( gStretchedSurface == NULL )
 	{
 		printf( "Failed to load stretching image!\n" );

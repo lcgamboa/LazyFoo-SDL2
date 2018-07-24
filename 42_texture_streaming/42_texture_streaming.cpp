@@ -413,7 +413,7 @@ bool DataStream::loadMedia()
 	for( int i = 0; i < 4; ++i )
 	{
 		char path[ 64 ] = "";
-		sprintf( path, "42_texture_streaming/foo_walk_%d.png", i );
+		sprintf( path, "assets/foo_walk_%d.png", i );
 
 		SDL_Surface* loadedSurface = IMG_Load( path );
 		if( loadedSurface == NULL )

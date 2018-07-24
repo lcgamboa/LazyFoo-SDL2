@@ -243,7 +243,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load arrow
-	if( !gArrowTexture.loadFromFile( "15_rotation_and_flipping/arrow.png" ) )
+	if( !gArrowTexture.loadFromFile( "assets/arrow.png" ) )
 	{
 		printf( "Failed to load arrow texture!\n" );
 		success = false;

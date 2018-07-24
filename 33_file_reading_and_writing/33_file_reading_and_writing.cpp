@@ -306,7 +306,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Open the font
-	gFont = TTF_OpenFont( "33_file_reading_and_writing/lazy.ttf", 28 );
+	gFont = TTF_OpenFont( "assets/lazy.ttf", 28 );
 	if( gFont == NULL )
 	{
 		printf( "Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError() );
@@ -323,7 +323,7 @@ bool loadMedia()
 	}
 
 	//Open file for reading in binary
-	SDL_RWops* file = SDL_RWFromFile( "33_file_reading_and_writing/nums.bin", "r+b" );
+	SDL_RWops* file = SDL_RWFromFile( "assets/nums.bin", "r+b" );
 
 	//File does not exist
 	if( file == NULL )
@@ -331,7 +331,7 @@ bool loadMedia()
 		printf( "Warning: Unable to open file! SDL Error: %s\n", SDL_GetError() );
 		
 		//Create file for writing
-		file = SDL_RWFromFile( "33_file_reading_and_writing/nums.bin", "w+b" );
+		file = SDL_RWFromFile( "assets/nums.bin", "w+b" );
 		if( file != NULL )
 		{
 			printf( "New file created!\n" );
@@ -379,7 +379,7 @@ bool loadMedia()
 void close()
 {
 	//Open data for writing
-	SDL_RWops* file = SDL_RWFromFile( "33_file_reading_and_writing/nums.bin", "w+b" );
+	SDL_RWops* file = SDL_RWFromFile( "assets/nums.bin", "w+b" );
 	if( file != NULL )
 	{
 		//Save data

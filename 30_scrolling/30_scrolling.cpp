@@ -401,14 +401,14 @@ bool loadMedia()
 	bool success = true;
 
 	//Load dot texture
-	if( !gDotTexture.loadFromFile( "30_scrolling/dot.bmp" ) )
+	if( !gDotTexture.loadFromFile( "assets/dot.bmp" ) )
 	{
 		printf( "Failed to load dot texture!\n" );
 		success = false;
 	}
 
 	//Load background texture
-	if( !gBGTexture.loadFromFile( "30_scrolling/bg.png" ) )
+	if( !gBGTexture.loadFromFile( "assets/bg.png" ) )
 	{
 		printf( "Failed to load background texture!\n" );
 		success = false;

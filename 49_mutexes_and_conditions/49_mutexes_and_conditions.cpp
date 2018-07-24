@@ -463,7 +463,7 @@ bool loadMedia()
 	bool success = true;
 	
 	//Load splash texture
-	if( !gSplashTexture.loadFromFile( "49_mutexes_and_conditions/splash.png" ) )
+	if( !gSplashTexture.loadFromFile( "assets/splash.png" ) )
 	{
 		printf( "Failed to load splash texture!\n" );
 		success = false;

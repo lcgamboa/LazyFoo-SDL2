@@ -224,7 +224,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load texture
-	if( !gModulatedTexture.loadFromFile( "12_color_modulation/colors.png" ) )
+	if( !gModulatedTexture.loadFromFile( "assets/colors.png" ) )
 	{
 		printf( "Failed to load colors texture!\n" );
 		success = false;

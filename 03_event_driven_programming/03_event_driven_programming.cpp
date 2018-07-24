@@ -63,10 +63,10 @@ bool loadMedia()
 	bool success = true;
 
 	//Load splash image
-	gXOut = SDL_LoadBMP( "03_event_driven_programming/x.bmp" );
+	gXOut = SDL_LoadBMP( "assets/x.bmp" );
 	if( gXOut == NULL )
 	{
-		printf( "Unable to load image %s! SDL Error: %s\n", "03_event_driven_programming/x.bmp", SDL_GetError() );
+		printf( "Unable to load image %s! SDL Error: %s\n", "assets/x.bmp", SDL_GetError() );
 		success = false;
 	}
 

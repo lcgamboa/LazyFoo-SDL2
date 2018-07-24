@@ -448,17 +448,17 @@ bool loadMedia()
 	bool success = true;
 
 	//Load scene textures
-	if( !gTouchDownTexture.loadFromFile( "54_touches/touch_down.png" ) )
+	if( !gTouchDownTexture.loadFromFile( "assets/touch_down.png" ) )
 	{
 		SDL_Log( "Failed to load touch down texture!\n" );
 		success = false;
 	}
-	if( !gTouchMotionTexture.loadFromFile( "54_touches/touch_motion.png" ) )
+	if( !gTouchMotionTexture.loadFromFile( "assets/touch_motion.png" ) )
 	{
 		SDL_Log( "Failed to load touch motion texture!\n" );
 		success = false;
 	}
-	if( !gTouchUpTexture.loadFromFile( "54_touches/touch_up.png" ) )
+	if( !gTouchUpTexture.loadFromFile( "assets/touch_up.png" ) )
 	{
 		SDL_Log( "Failed to load touch up texture!\n" );
 		success = false;

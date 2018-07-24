@@ -642,7 +642,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load font texture
-	if( !gBitmapTexture.loadFromFile( "41_bitmap_fonts/lazyfont.png" ) )
+	if( !gBitmapTexture.loadFromFile( "assets/lazyfont.png" ) )
 	{
 		printf( "Failed to load corner texture!\n" );
 		success = false;

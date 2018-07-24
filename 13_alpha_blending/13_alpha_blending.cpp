@@ -243,7 +243,7 @@ bool loadMedia()
 	bool success = true;
 
 	//Load front alpha texture
-	if( !gModulatedTexture.loadFromFile( "13_alpha_blending/fadeout.png" ) )
+	if( !gModulatedTexture.loadFromFile( "assets/fadeout.png" ) )
 	{
 		printf( "Failed to load front texture!\n" );
 		success = false;
@@ -255,7 +255,7 @@ bool loadMedia()
 	}
 
 	//Load background texture
-	if( !gBackgroundTexture.loadFromFile( "13_alpha_blending/fadein.png" ) )
+	if( !gBackgroundTexture.loadFromFile( "assets/fadein.png" ) )
 	{
 		printf( "Failed to load background texture!\n" );
 		success = false;

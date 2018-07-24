@@ -451,7 +451,7 @@ bool loadMedia()
 	bool success = true;
 	
 	//Load splash texture
-	if( !gSplashTexture.loadFromFile( "47_semaphores/splash.png" ) )
+	if( !gSplashTexture.loadFromFile( "assets/splash.png" ) )
 	{
 		printf( "Failed to load splash texture!\n" );
 		success = false;

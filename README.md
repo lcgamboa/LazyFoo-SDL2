@@ -5,7 +5,7 @@
 All SDL2 code examples from http://lazyfoo.net/tutorials/SDL/ with Makefile
 
 
-##Before run make install:
+##Before run make:
 
 
 ```

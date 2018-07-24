@@ -3,9 +3,9 @@ and may not be redistributed without written permission.*/
 
 //Using SDL, SDL OpenGL, GLEW, standard IO, and strings
 #include <SDL.h>
-#include <gl\glew.h>
+#include <GL/glew.h>
 #include <SDL_opengl.h>
-#include <gl\glu.h>
+#include <GL/glu.h>
 #include <stdio.h>
 #include <string>
 

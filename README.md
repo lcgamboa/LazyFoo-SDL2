@@ -20,7 +20,7 @@ Run:
 make
 ```
 
-###For build javascript version
+### For build javascript version
 
 Install and configure emscripten, and run:
 

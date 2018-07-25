@@ -490,7 +490,6 @@ std::stringstream timeText;
 
 //Start counting frames per second
 int countedFrames = 0;
-fpsTimer.start();
 
 
 void loop_handler(void*)
@@ -565,6 +564,8 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
+		
+			fpsTimer.start();
 #ifdef _JS
 
                         emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);

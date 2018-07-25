@@ -486,10 +486,6 @@ Dot dot;
 
 //Set the wall
 SDL_Rect wall;
-wall.x = 300;
-wall.y = 40;
-wall.w = 40;
-wall.h = 400;
 			
 
 void loop_handler(void*)
@@ -545,6 +541,10 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
+			wall.x = 300;
+			wall.y = 40;
+			wall.w = 40;
+			wall.h = 400;
 #ifdef _JS
 
                         emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);

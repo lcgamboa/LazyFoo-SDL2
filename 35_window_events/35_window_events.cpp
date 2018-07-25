@@ -299,14 +299,16 @@ bool LWindow::init()
 
 SDL_Renderer* LWindow::createRenderer()
 {
-	return SDL_CreateRenderer( mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+	SDL_Renderer* Rend = SDL_CreateRenderer( mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
 
 	//try software render if hardware fails
-	if( gRenderer == NULL )
+	if( Rend == NULL )
 	{
 		SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
-		gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+		Rend = SDL_CreateRenderer( mWindow, -1, SDL_RENDERER_SOFTWARE);
 	}
+
+	return Rend;
  
 }
 

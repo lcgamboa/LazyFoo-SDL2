@@ -279,7 +279,7 @@ void render()
 		glDisableVertexAttribArray( gVertexPos2DLocation );
 
 		//Unbind program
-		glUseProgram( NULL );
+		glUseProgram( 0 );
 	}
 }
 

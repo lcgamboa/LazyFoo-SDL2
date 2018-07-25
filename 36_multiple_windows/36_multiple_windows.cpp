@@ -106,10 +106,10 @@ bool LWindow::init()
 		mRenderer = SDL_CreateRenderer( mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
 
 		//try software render if hardware fails
-		if( gRenderer == NULL )
+		if( mRenderer == NULL )
 		{
 			SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
-			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+			mRenderer = SDL_CreateRenderer( mWindow, -1, SDL_RENDERER_SOFTWARE);
 		}
  
 		if( mRenderer == NULL )

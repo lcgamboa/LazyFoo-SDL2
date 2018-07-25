@@ -1,7 +1,7 @@
 
 FILE=Makefile
 
-SUBDIRS =  $(wildcard */)
+SUBDIRS =  $(sort $(wildcard */))
 
 .PHONY:  $(SUBDIRS)
 
@@ -13,3 +13,7 @@ clean:$(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -f $(FILE) -C $@ $(MAKECMDGOALS)
+
+test:
+	ip addr show
+	python -m SimpleHTTPServer

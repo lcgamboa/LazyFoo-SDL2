@@ -131,7 +131,7 @@ bool LTexture::loadFromFile( std::string path )
 	else
 	{
 		//Convert surface to display format
-		SDL_Surface* formattedSurface = SDL_ConvertSurfaceFormat( loadedSurface, SDL_PIXELFORMAT_RGBA8888, NULL );
+		SDL_Surface* formattedSurface = SDL_ConvertSurfaceFormat( loadedSurface, SDL_PIXELFORMAT_RGBA8888, 0 );
 		if( formattedSurface == NULL )
 		{
 			printf( "Unable to convert loaded surface to display format! %s\n", SDL_GetError() );
@@ -484,7 +484,7 @@ void close()
 int threadFunction( void* data )
 {
 	//Print incoming data
-	printf( "Running thread with value = %d\n", (int)data );
+	printf( "Running thread with value = %d\n", *((int*)data) );
 
 	return 0;
 }
@@ -540,7 +540,7 @@ int main( int argc, char* args[] )
 		else
 		{	
 			//Run the thread
-			threadID = SDL_CreateThread( threadFunction, "LazyThread", (void*)data );
+			threadID = SDL_CreateThread( threadFunction, "LazyThread", (void*) &data );
 
 #ifdef _JS
 

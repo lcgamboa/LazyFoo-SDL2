@@ -768,6 +768,9 @@ bool touchesWall( SDL_Rect box, Tile* tiles[] )
     //If no wall tiles were touched
     return false;
 }
+		
+//The level tiles
+Tile* tileSet[ TOTAL_TILES ];
 
 //Main loop flag
 bool quit = false;
@@ -827,8 +830,6 @@ int main( int argc, char* args[] )
 	}
 	else
 	{
-		//The level tiles
-		Tile* tileSet[ TOTAL_TILES ];
 
 		//Load media
 		if( !loadMedia( tileSet ) )

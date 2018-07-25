@@ -9,7 +9,7 @@ all: $(TARGET)
 	$(CC) $(FLAGS) $(FILE) -o $(TARGET) $(LIBS)
 
 js: 
-	$(CCE) $(FILE)  $(FLAGSE) -o $(TARGET).html
+#	$(CCE) $(FILE)  $(FLAGSE) -o $(TARGET).html
 
 clean:
 	rm -rf $(TARGET) *.js *.data *.wasm *.html *.mem

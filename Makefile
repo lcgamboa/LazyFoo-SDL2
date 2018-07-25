@@ -6,7 +6,7 @@ SUBDIRS =  $(sort $(wildcard */))
 .PHONY:  $(SUBDIRS)
 
 all:$(SUBDIRS) 
-
+	
 js:$(SUBDIRS) 
 
 clean:$(SUBDIRS) 

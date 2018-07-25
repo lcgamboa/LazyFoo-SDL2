@@ -28,3 +28,6 @@ Install and configure emscripten, and run:
 make js
 ```
 
+## Docs and online examples
+
+https://lcgamboa.github.io/LazyFoo-SDL2/

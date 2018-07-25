@@ -8,6 +8,9 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <string>
 #include <sstream>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -392,6 +395,14 @@ bool init()
 		{
 			//Create vsynced renderer for window
 			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+
+			//try software render if hardware fails
+			if( gRenderer == NULL )
+			{
+				SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
+				gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+			}
+
 			if( gRenderer == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -460,6 +471,66 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+			
+//Set text color as black
+SDL_Color textColor = { 0, 0, 0, 255 };
+
+//The frames per second timer
+LTimer fpsTimer;
+
+//In memory text stream
+std::stringstream timeText;
+
+//Start counting frames per second
+int countedFrames = 0;
+fpsTimer.start();
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+	}
+
+	//Calculate and correct fps
+	float avgFPS = countedFrames / ( fpsTimer.getTicks() / 1000.f );
+	if( avgFPS > 2000000 )
+	{
+		avgFPS = 0;
+	}
+				
+	//Set text to be rendered
+	timeText.str( "" );
+	timeText << "Average Frames Per Second " << avgFPS; 
+
+	//Render text
+	if( !gFPSTextTexture.loadFromRenderedText( timeText.str().c_str(), textColor ) )
+	{
+		printf( "Unable to render FPS texture!\n" );
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render textures
+	gFPSTextTexture.render( ( SCREEN_WIDTH - gFPSTextTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gFPSTextTexture.getHeight() ) / 2 );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+	++countedFrames;
+
+}
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -476,66 +547,17 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
-			//Set text color as black
-			SDL_Color textColor = { 0, 0, 0, 255 };
-
-			//The frames per second timer
-			LTimer fpsTimer;
-
-			//In memory text stream
-			std::stringstream timeText;
-
-			//Start counting frames per second
-			int countedFrames = 0;
-			fpsTimer.start();
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-				}
-
-				//Calculate and correct fps
-				float avgFPS = countedFrames / ( fpsTimer.getTicks() / 1000.f );
-				if( avgFPS > 2000000 )
-				{
-					avgFPS = 0;
-				}
-				
-				//Set text to be rendered
-				timeText.str( "" );
-				timeText << "Average Frames Per Second " << avgFPS; 
-
-				//Render text
-				if( !gFPSTextTexture.loadFromRenderedText( timeText.str().c_str(), textColor ) )
-				{
-					printf( "Unable to render FPS texture!\n" );
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render textures
-				gFPSTextTexture.render( ( SCREEN_WIDTH - gFPSTextTexture.getWidth() ) / 2, ( SCREEN_HEIGHT - gFPSTextTexture.getHeight() ) / 2 );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
-				++countedFrames;
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

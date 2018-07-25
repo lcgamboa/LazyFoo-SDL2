@@ -6,6 +6,9 @@ and may not be redistributed without written permission.*/
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -414,6 +417,14 @@ bool init()
 		{
 			//Create renderer for window
 			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+
+			//try software render if hardware fails
+			if( gRenderer == NULL )
+			{
+				SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
+				gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+			}
+ 
 			if( gRenderer == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -477,6 +488,38 @@ Uint32 callback( Uint32 interval, void* param )
 	return 0;
 }
 
+//Main loop flag
+bool quit = false;
+
+SDL_TimerID timerID;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render splash
+	gSplashTexture.render( 0, 0 );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+ 
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -492,39 +535,21 @@ int main( int argc, char* args[] )
 			printf( "Failed to load media!\n" );
 		}
 		else
-		{	
-			//Main loop flag
-			bool quit = false;
-
-			//Event handler
-			SDL_Event e;
+		{
 
 			//Set callback
-			SDL_TimerID timerID = SDL_AddTimer( 3 * 1000, callback, (void *)"3 seconds waited!" );
+			timerID = SDL_AddTimer( 3 * 1000, callback, (void *)"3 seconds waited!" );
+	
+#ifdef _JS
 
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render splash
-				gSplashTexture.render( 0, 0 );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
 
 			//Remove timer in case the call back was not called
 			SDL_RemoveTimer( timerID );

@@ -6,6 +6,9 @@ and may not be redistributed without written permission.*/
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -399,6 +402,14 @@ bool init()
 		{
 			//Create vsynced renderer for window
 			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+
+			//try software render if hardware fails
+			if( gRenderer == NULL )
+			{
+				SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
+				gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+			}
+ 
 			if( gRenderer == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -522,6 +533,57 @@ double distanceSquared( int x1, int y1, int x2, int y2 )
 	return deltaX*deltaX + deltaY*deltaY;
 }
 
+//Main loop flag
+bool quit = false;
+
+//The dot that will be moving around on the screen
+Dot dot( Dot::DOT_WIDTH / 2, Dot::DOT_HEIGHT / 2 );
+Dot otherDot( SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4 );
+
+//Set the wall
+SDL_Rect wall;
+wall.x = 300;
+wall.y = 40;
+wall.w = 40;
+wall.h = 400;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+		//Handle input for the dot
+		dot.handleEvent( e );
+	}
+
+	//Move the dot and check collision
+	dot.move( wall, otherDot.getCollider() );
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render wall
+	SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0xFF );		
+	SDL_RenderDrawRect( gRenderer, &wall );
+				
+	//Render dots
+	dot.render();
+	otherDot.render();
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+ 
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -538,57 +600,17 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
-			//The dot that will be moving around on the screen
-			Dot dot( Dot::DOT_WIDTH / 2, Dot::DOT_HEIGHT / 2 );
-			Dot otherDot( SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4 );
-
-			//Set the wall
-			SDL_Rect wall;
-			wall.x = 300;
-			wall.y = 40;
-			wall.w = 40;
-			wall.h = 400;
-			
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-
-					//Handle input for the dot
-					dot.handleEvent( e );
-				}
-
-				//Move the dot and check collision
-				dot.move( wall, otherDot.getCollider() );
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render wall
-				SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0x00, 0xFF );		
-				SDL_RenderDrawRect( gRenderer, &wall );
-				
-				//Render dots
-				dot.render();
-				otherDot.render();
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

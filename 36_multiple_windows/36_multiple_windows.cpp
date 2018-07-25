@@ -6,6 +6,9 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <string>
 #include <sstream>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -101,6 +104,14 @@ bool LWindow::init()
 
 		//Create renderer for window
 		mRenderer = SDL_CreateRenderer( mWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+
+		//try software render if hardware fails
+		if( gRenderer == NULL )
+		{
+			SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
+			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+		}
+ 
 		if( mRenderer == NULL )
 		{
 			printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -324,6 +335,74 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+
+		//Handle window events
+		for( int i = 0; i < TOTAL_WINDOWS; ++i )
+		{
+			gWindows[ i ].handleEvent( e );
+		}
+
+		//Pull up window
+		if( e.type == SDL_KEYDOWN )
+		{
+			switch( e.key.keysym.sym )
+			{
+				case SDLK_1:
+				gWindows[ 0 ].focus();
+				break;
+
+				case SDLK_2:
+				gWindows[ 1 ].focus();
+				break;
+					
+				case SDLK_3:
+				gWindows[ 2 ].focus();
+				break;
+			}
+		}
+	}
+
+	//Update all windows
+	for( int i = 0; i < TOTAL_WINDOWS; ++i )
+	{
+		gWindows[ i ].render();
+	}
+				
+	//Check all windows
+	bool allWindowsClosed = true;
+	for( int i = 0; i < TOTAL_WINDOWS; ++i )
+	{
+		if( gWindows[ i ].isShown() )
+		{
+			allWindowsClosed = false;
+			break;
+		}
+	}
+
+	//Application closed all windows
+	if( allWindowsClosed )
+	{
+		quit = true;
+	}
+
+}
+ 
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -338,74 +417,17 @@ int main( int argc, char* args[] )
 		{
 			gWindows[ i ].init();
 		}
+#ifdef _JS
 
-		//Main loop flag
-		bool quit = false;
-
-		//Event handler
-		SDL_Event e;
-
+                emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 		//While application is running
 		while( !quit )
 		{
-			//Handle events on queue
-			while( SDL_PollEvent( &e ) != 0 )
-			{
-				//User requests quit
-				if( e.type == SDL_QUIT )
-				{
-					quit = true;
-				}
-
-				//Handle window events
-				for( int i = 0; i < TOTAL_WINDOWS; ++i )
-				{
-					gWindows[ i ].handleEvent( e );
-				}
-
-				//Pull up window
-				if( e.type == SDL_KEYDOWN )
-				{
-					switch( e.key.keysym.sym )
-					{
-						case SDLK_1:
-						gWindows[ 0 ].focus();
-						break;
-
-						case SDLK_2:
-						gWindows[ 1 ].focus();
-						break;
-							
-						case SDLK_3:
-						gWindows[ 2 ].focus();
-						break;
-					}
-				}
-			}
-
-			//Update all windows
-			for( int i = 0; i < TOTAL_WINDOWS; ++i )
-			{
-				gWindows[ i ].render();
-			}
-				
-			//Check all windows
-			bool allWindowsClosed = true;
-			for( int i = 0; i < TOTAL_WINDOWS; ++i )
-			{
-				if( gWindows[ i ].isShown() )
-				{
-					allWindowsClosed = false;
-					break;
-				}
-			}
-
-			//Application closed all windows
-			if( allWindowsClosed )
-			{
-				quit = true;
-			}
+	 	 loop_handler(NULL);	
 		}
+#endif
+
 	}
 
 	//Free resources and close SDL

@@ -6,6 +6,9 @@ and may not be redistributed without written permission.*/
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //The dimensions of the level
 const int LEVEL_WIDTH = 1280;
@@ -371,6 +374,14 @@ bool init()
 		{
 			//Create vsynced renderer for window
 			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+
+			//try software render if hardware fails
+			if( gRenderer == NULL )
+			{
+				SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
+				gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+			}
+ 
 			if( gRenderer == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -434,6 +445,73 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+//The dot that will be moving around on the screen
+Dot dot;
+
+//The camera area
+SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+
+		//Handle input for the dot
+		dot.handleEvent( e );
+	}
+
+	//Move the dot
+	dot.move();
+
+	//Center the camera over the dot
+	camera.x = ( dot.getPosX() + Dot::DOT_WIDTH / 2 ) - SCREEN_WIDTH / 2;
+	camera.y = ( dot.getPosY() + Dot::DOT_HEIGHT / 2 ) - SCREEN_HEIGHT / 2;
+
+	//Keep the camera in bounds
+	if( camera.x < 0 )
+	{ 
+		camera.x = 0;
+	}
+	if( camera.y < 0 )
+	{
+		camera.y = 0;
+	}
+	if( camera.x > LEVEL_WIDTH - camera.w )
+	{
+		camera.x = LEVEL_WIDTH - camera.w;
+	}
+	if( camera.y > LEVEL_HEIGHT - camera.h )
+	{
+		camera.y = LEVEL_HEIGHT - camera.h;
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render background
+	gBGTexture.render( 0, 0, &camera );
+
+	//Render objects
+	dot.render( camera.x, camera.y );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+ 
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -450,72 +528,17 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
-			//The dot that will be moving around on the screen
-			Dot dot;
-
-			//The camera area
-			SDL_Rect camera = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-
-					//Handle input for the dot
-					dot.handleEvent( e );
-				}
-
-				//Move the dot
-				dot.move();
-
-				//Center the camera over the dot
-				camera.x = ( dot.getPosX() + Dot::DOT_WIDTH / 2 ) - SCREEN_WIDTH / 2;
-				camera.y = ( dot.getPosY() + Dot::DOT_HEIGHT / 2 ) - SCREEN_HEIGHT / 2;
-
-				//Keep the camera in bounds
-				if( camera.x < 0 )
-				{ 
-					camera.x = 0;
-				}
-				if( camera.y < 0 )
-				{
-					camera.y = 0;
-				}
-				if( camera.x > LEVEL_WIDTH - camera.w )
-				{
-					camera.x = LEVEL_WIDTH - camera.w;
-				}
-				if( camera.y > LEVEL_HEIGHT - camera.h )
-				{
-					camera.y = LEVEL_HEIGHT - camera.h;
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render background
-				gBGTexture.render( 0, 0, &camera );
-
-				//Render objects
-				dot.render( camera.x, camera.y );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

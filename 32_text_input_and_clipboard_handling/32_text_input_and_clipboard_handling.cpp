@@ -8,6 +8,9 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <string>
 #include <sstream>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -259,6 +262,14 @@ bool init()
 		{
 			//Create vsynced renderer for window
 			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+
+			//try software render if hardware fails
+			if( gRenderer == NULL )
+			{
+				SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
+				gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+			}
+ 
 			if( gRenderer == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -338,6 +349,96 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+//Set text color as black
+SDL_Color textColor = { 0, 0, 0, 0xFF };
+
+//The current input text.
+std::string inputText = "Some Text";
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+
+	//The rerender text flag
+	bool renderText = false;
+
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+		//Special key input
+		else if( e.type == SDL_KEYDOWN )
+		{
+			//Handle backspace
+			if( e.key.keysym.sym == SDLK_BACKSPACE && inputText.length() > 0 )
+			{
+				//lop off character
+				inputText.pop_back();
+				renderText = true;
+			}
+			//Handle copy
+			else if( e.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL )
+			{
+				SDL_SetClipboardText( inputText.c_str() );
+			}
+			//Handle paste
+			else if( e.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL )
+			{
+				inputText = SDL_GetClipboardText();
+				renderText = true;
+			}
+		}
+		//Special text input event
+		else if( e.type == SDL_TEXTINPUT )
+		{
+			//Not copy or pasting
+			if( !( ( e.text.text[ 0 ] == 'c' || e.text.text[ 0 ] == 'C' ) && ( e.text.text[ 0 ] == 'v' || e.text.text[ 0 ] == 'V' ) && SDL_GetModState() & KMOD_CTRL ) )
+			{
+				//Append character
+				inputText += e.text.text;
+				renderText = true;
+			}
+		}
+	}
+
+	//Rerender text if needed
+	if( renderText )
+	{
+		//Text is not empty
+		if( inputText != "" )
+		{
+			//Render new text
+			gInputTextTexture.loadFromRenderedText( inputText.c_str(), textColor );
+		}
+		//Text is empty
+		else
+		{
+			//Render space texture
+			gInputTextTexture.loadFromRenderedText( " ", textColor );
+		}
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render text textures
+	gPromptTextTexture.render( ( SCREEN_WIDTH - gPromptTextTexture.getWidth() ) / 2, 0 );
+	gInputTextTexture.render( ( SCREEN_WIDTH - gInputTextTexture.getWidth() ) / 2, gPromptTextTexture.getHeight() );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+ 
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -354,99 +455,22 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
 
-			//Event handler
-			SDL_Event e;
-
-			//Set text color as black
-			SDL_Color textColor = { 0, 0, 0, 0xFF };
-
-			//The current input text.
-			std::string inputText = "Some Text";
+			
 			gInputTextTexture.loadFromRenderedText( inputText.c_str(), textColor );
 
 			//Enable text input
 			SDL_StartTextInput();
+#ifdef _JS
 
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//The rerender text flag
-				bool renderText = false;
-
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-					//Special key input
-					else if( e.type == SDL_KEYDOWN )
-					{
-						//Handle backspace
-						if( e.key.keysym.sym == SDLK_BACKSPACE && inputText.length() > 0 )
-						{
-							//lop off character
-							inputText.pop_back();
-							renderText = true;
-						}
-						//Handle copy
-						else if( e.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL )
-						{
-							SDL_SetClipboardText( inputText.c_str() );
-						}
-						//Handle paste
-						else if( e.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL )
-						{
-							inputText = SDL_GetClipboardText();
-							renderText = true;
-						}
-					}
-					//Special text input event
-					else if( e.type == SDL_TEXTINPUT )
-					{
-						//Not copy or pasting
-						if( !( ( e.text.text[ 0 ] == 'c' || e.text.text[ 0 ] == 'C' ) && ( e.text.text[ 0 ] == 'v' || e.text.text[ 0 ] == 'V' ) && SDL_GetModState() & KMOD_CTRL ) )
-						{
-							//Append character
-							inputText += e.text.text;
-							renderText = true;
-						}
-					}
-				}
-
-				//Rerender text if needed
-				if( renderText )
-				{
-					//Text is not empty
-					if( inputText != "" )
-					{
-						//Render new text
-						gInputTextTexture.loadFromRenderedText( inputText.c_str(), textColor );
-					}
-					//Text is empty
-					else
-					{
-						//Render space texture
-						gInputTextTexture.loadFromRenderedText( " ", textColor );
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render text textures
-				gPromptTextTexture.render( ( SCREEN_WIDTH - gPromptTextTexture.getWidth() ) / 2, 0 );
-				gInputTextTexture.render( ( SCREEN_WIDTH - gInputTextTexture.getWidth() ) / 2, gPromptTextTexture.getHeight() );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
 			
 			//Disable text input
 			SDL_StopTextInput();

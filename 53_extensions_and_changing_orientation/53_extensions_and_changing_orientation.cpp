@@ -7,6 +7,9 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <string>
 #include <string.h>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Texture wrapper class
 class LTexture
@@ -417,6 +420,14 @@ bool init()
 		{
 			//Create renderer for window
 			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+
+			//try software render if hardware fails
+			if( gRenderer == NULL )
+			{
+				SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
+				gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+			}
+ 
 			if( gRenderer == NULL )
 			{
 				SDL_Log( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -478,6 +489,56 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+		
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+		//Window event
+		else if( e.type == SDL_WINDOWEVENT )
+		{
+			//Window resize/orientation change
+			if( e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED )
+			{
+				//Get screen dimensions
+				gScreenRect.w = e.window.data1;
+				gScreenRect.h = e.window.data2;
+							
+				//Update screen
+				SDL_RenderPresent( gRenderer );
+			}
+		}
+	}
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render splash
+	if( gScreenRect.h >= gScreenRect.w )
+	{
+		gPortraitTexture.render( ( gScreenRect.w - gPortraitTexture.getWidth() ) / 2, ( gScreenRect.h - gPortraitTexture.getHeight() ) / 2 );	
+	}
+	else
+	{
+		gLandscapeTexture.render( ( gScreenRect.w - gLandscapeTexture.getWidth() ) / 2, ( gScreenRect.h - gLandscapeTexture.getHeight() ) / 2 );	
+	}
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+ 
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -494,56 +555,17 @@ int main( int argc, char* args[] )
 		}
 		else
 		{
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-					//Window event
-					else if( e.type == SDL_WINDOWEVENT )
-					{
-						//Window resize/orientation change
-						if( e.window.event == SDL_WINDOWEVENT_SIZE_CHANGED )
-						{
-							//Get screen dimensions
-							gScreenRect.w = e.window.data1;
-							gScreenRect.h = e.window.data2;
-							
-							//Update screen
-							SDL_RenderPresent( gRenderer );
-						}
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render splash
-				if( gScreenRect.h >= gScreenRect.w )
-				{
-					gPortraitTexture.render( ( gScreenRect.w - gPortraitTexture.getWidth() ) / 2, ( gScreenRect.h - gPortraitTexture.getHeight() ) / 2 );	
-				}
-				else
-				{
-					gLandscapeTexture.render( ( gScreenRect.w - gLandscapeTexture.getWidth() ) / 2, ( gScreenRect.h - gLandscapeTexture.getHeight() ) / 2 );	
-				}
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

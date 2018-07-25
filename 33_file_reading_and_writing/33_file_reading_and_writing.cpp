@@ -8,6 +8,9 @@ and may not be redistributed without written permission.*/
 #include <stdio.h>
 #include <string>
 #include <sstream>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -265,6 +268,14 @@ bool init()
 		{
 			//Create vsynced renderer for window
 			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+
+			//try software render if hardware fails
+			if( gRenderer == NULL )
+			{
+				SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
+				gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+			}
+ 
 			if( gRenderer == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -419,6 +430,92 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+//Text rendering color
+SDL_Color textColor = { 0, 0, 0, 0xFF };
+SDL_Color highlightColor = { 0xFF, 0, 0, 0xFF };
+
+//Current input point
+int currentData = 0;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+		else if( e.type == SDL_KEYDOWN )
+		{
+			switch( e.key.keysym.sym )
+			{
+				//Previous data entry
+				case SDLK_UP:
+				//Rerender previous entry input point
+				gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), textColor );
+				--currentData;
+				if( currentData < 0 )
+				{
+					currentData = TOTAL_DATA - 1;
+				}
+							
+				//Rerender current entry input point
+				gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), highlightColor );
+				break;
+							
+				//Next data entry
+				case SDLK_DOWN:
+				//Rerender previous entry input point
+				gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), textColor );
+				++currentData;
+				if( currentData == TOTAL_DATA )
+				{
+					currentData = 0;
+				}
+							
+				//Rerender current entry input point
+				gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), highlightColor );
+				break;
+
+				//Decrement input point
+				case SDLK_LEFT:
+				--gData[ currentData ];
+				gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), highlightColor );
+				break;
+							
+				//Increment input point
+				case SDLK_RIGHT:
+				++gData[ currentData ];
+				gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), highlightColor );
+				break;
+			}
+		}
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render text textures
+	gPromptTextTexture.render( ( SCREEN_WIDTH - gPromptTextTexture.getWidth() ) / 2, 0 );
+	for( int i = 0; i < TOTAL_DATA; ++i )
+	{
+		gDataTextures[ i ].render( ( SCREEN_WIDTH - gDataTextures[ i ].getWidth() ) / 2, gPromptTextTexture.getHeight() + gDataTextures[ 0 ].getHeight() * i );
+	}
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+ 
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -435,91 +532,17 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
-			//Text rendering color
-			SDL_Color textColor = { 0, 0, 0, 0xFF };
-			SDL_Color highlightColor = { 0xFF, 0, 0, 0xFF };
-
-			//Current input point
-			int currentData = 0;
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-					else if( e.type == SDL_KEYDOWN )
-					{
-						switch( e.key.keysym.sym )
-						{
-							//Previous data entry
-							case SDLK_UP:
-							//Rerender previous entry input point
-							gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), textColor );
-							--currentData;
-							if( currentData < 0 )
-							{
-								currentData = TOTAL_DATA - 1;
-							}
-							
-							//Rerender current entry input point
-							gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), highlightColor );
-							break;
-							
-							//Next data entry
-							case SDLK_DOWN:
-							//Rerender previous entry input point
-							gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), textColor );
-							++currentData;
-							if( currentData == TOTAL_DATA )
-							{
-								currentData = 0;
-							}
-							
-							//Rerender current entry input point
-							gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), highlightColor );
-							break;
-
-							//Decrement input point
-							case SDLK_LEFT:
-							--gData[ currentData ];
-							gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), highlightColor );
-							break;
-							
-							//Increment input point
-							case SDLK_RIGHT:
-							++gData[ currentData ];
-							gDataTextures[ currentData ].loadFromRenderedText( std::to_string( (_Longlong)gData[ currentData ] ), highlightColor );
-							break;
-						}
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render text textures
-				gPromptTextTexture.render( ( SCREEN_WIDTH - gPromptTextTexture.getWidth() ) / 2, 0 );
-				for( int i = 0; i < TOTAL_DATA; ++i )
-				{
-					gDataTextures[ i ].render( ( SCREEN_WIDTH - gDataTextures[ i ].getWidth() ) / 2, gPromptTextTexture.getHeight() + gDataTextures[ 0 ].getHeight() * i );
-				}
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

@@ -7,6 +7,9 @@ and may not be redistributed without written permission.*/
 #include <SDL_mixer.h>
 #include <stdio.h>
 #include <string>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -264,6 +267,14 @@ bool init()
 		{
 			//Create vsynced renderer for window
 			gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC );
+
+			//try software render if hardware fails
+			if( gRenderer == NULL )
+			{
+				SDL_Log( "Accelerated renderer could not be created! SDL Error: %s\nSwitching to software renderer", SDL_GetError() );
+				gRenderer = SDL_CreateRenderer( gWindow, -1, SDL_RENDERER_SOFTWARE);
+			}
+
 			if( gRenderer == NULL )
 			{
 				printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -378,6 +389,91 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+		//Handle key press
+		else if( e.type == SDL_KEYDOWN )
+		{
+			switch( e.key.keysym.sym )
+			{
+				//Play high sound effect
+				case SDLK_1:
+				Mix_PlayChannel( -1, gHigh, 0 );
+				break;
+				
+				//Play medium sound effect
+				case SDLK_2:
+				Mix_PlayChannel( -1, gMedium, 0 );
+				break;
+							
+				//Play low sound effect
+				case SDLK_3:
+				Mix_PlayChannel( -1, gLow, 0 );
+				break;
+							
+				//Play scratch sound effect
+				case SDLK_4:
+				Mix_PlayChannel( -1, gScratch, 0 );
+				break;
+							
+				case SDLK_9:
+				//If there is no music playing
+				if( Mix_PlayingMusic() == 0 )
+				{
+					//Play the music
+					Mix_PlayMusic( gMusic, -1 );
+				}
+				//If music is being played
+				else
+				{
+					//If the music is paused
+					if( Mix_PausedMusic() == 1 )
+					{
+						//Resume the music
+						Mix_ResumeMusic();
+					}
+					//If the music is playing
+					else
+					{
+						//Pause the music
+						Mix_PauseMusic();
+					}
+				}
+				break;
+							
+				case SDLK_0:
+				//Stop the music
+				Mix_HaltMusic();
+				break;
+			}
+		}
+	}
+
+	//Clear screen
+	SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
+	SDL_RenderClear( gRenderer );
+
+	//Render prompt
+	gPromptTexture.render( 0, 0 );
+
+	//Update screen
+	SDL_RenderPresent( gRenderer );
+
+}
+
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -394,91 +490,17 @@ int main( int argc, char* args[] )
 		}
 		else
 		{	
-			//Main loop flag
-			bool quit = false;
+#ifdef _JS
 
-			//Event handler
-			SDL_Event e;
-
+                        emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 			//While application is running
 			while( !quit )
 			{
-				//Handle events on queue
-				while( SDL_PollEvent( &e ) != 0 )
-				{
-					//User requests quit
-					if( e.type == SDL_QUIT )
-					{
-						quit = true;
-					}
-					//Handle key press
-					else if( e.type == SDL_KEYDOWN )
-					{
-						switch( e.key.keysym.sym )
-						{
-							//Play high sound effect
-							case SDLK_1:
-							Mix_PlayChannel( -1, gHigh, 0 );
-							break;
-							
-							//Play medium sound effect
-							case SDLK_2:
-							Mix_PlayChannel( -1, gMedium, 0 );
-							break;
-							
-							//Play low sound effect
-							case SDLK_3:
-							Mix_PlayChannel( -1, gLow, 0 );
-							break;
-							
-							//Play scratch sound effect
-							case SDLK_4:
-							Mix_PlayChannel( -1, gScratch, 0 );
-							break;
-							
-							case SDLK_9:
-							//If there is no music playing
-							if( Mix_PlayingMusic() == 0 )
-							{
-								//Play the music
-								Mix_PlayMusic( gMusic, -1 );
-							}
-							//If music is being played
-							else
-							{
-								//If the music is paused
-								if( Mix_PausedMusic() == 1 )
-								{
-									//Resume the music
-									Mix_ResumeMusic();
-								}
-								//If the music is playing
-								else
-								{
-									//Pause the music
-									Mix_PauseMusic();
-								}
-							}
-							break;
-							
-							case SDLK_0:
-							//Stop the music
-							Mix_HaltMusic();
-							break;
-						}
-					}
-				}
-
-				//Clear screen
-				SDL_SetRenderDrawColor( gRenderer, 0xFF, 0xFF, 0xFF, 0xFF );
-				SDL_RenderClear( gRenderer );
-
-				//Render prompt
-				gPromptTexture.render( 0, 0 );
-
-				//Update screen
-				SDL_RenderPresent( gRenderer );
+		 	 loop_handler(NULL);	
 			}
+#endif
+
 		}
 	}
 

@@ -7,6 +7,9 @@ and may not be redistributed without written permission.*/
 #include <GL/glu.h>
 #include <stdio.h>
 #include <string>
+#ifdef _JS
+#include <emscripten.h>
+#endif
 
 //Screen dimension constants
 const int SCREEN_WIDTH = 640;
@@ -177,6 +180,39 @@ void close()
 	SDL_Quit();
 }
 
+//Main loop flag
+bool quit = false;
+
+void loop_handler(void*)
+{
+	//Event handler
+	SDL_Event e;
+
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+		//User requests quit
+		if( e.type == SDL_QUIT )
+		{
+			quit = true;
+		}
+		//Handle keypress with current mouse position
+		else if( e.type == SDL_TEXTINPUT )
+		{
+			int x = 0, y = 0;
+			SDL_GetMouseState( &x, &y );
+			handleKeys( e.text.text[ 0 ], x, y );
+		}
+	}
+
+	//Render quad
+	render();
+			
+	//Update screen
+	SDL_GL_SwapWindow( gWindow );
+
+}
+ 
 int main( int argc, char* args[] )
 {
 	//Start up SDL and create window
@@ -186,41 +222,19 @@ int main( int argc, char* args[] )
 	}
 	else
 	{
-		//Main loop flag
-		bool quit = false;
-
-		//Event handler
-		SDL_Event e;
 		
 		//Enable text input
 		SDL_StartTextInput();
+#ifdef _JS
 
+                emscripten_set_main_loop_arg(loop_handler, NULL, -1, 1);
+#else
 		//While application is running
 		while( !quit )
 		{
-			//Handle events on queue
-			while( SDL_PollEvent( &e ) != 0 )
-			{
-				//User requests quit
-				if( e.type == SDL_QUIT )
-				{
-					quit = true;
-				}
-				//Handle keypress with current mouse position
-				else if( e.type == SDL_TEXTINPUT )
-				{
-					int x = 0, y = 0;
-					SDL_GetMouseState( &x, &y );
-					handleKeys( e.text.text[ 0 ], x, y );
-				}
-			}
-
-			//Render quad
-			render();
-			
-			//Update screen
-			SDL_GL_SwapWindow( gWindow );
+			loop_handler(NULL);	
 		}
+#endif
 		
 		//Disable text input
 		SDL_StopTextInput();
